@@ -1,12 +1,12 @@
 /-  *beacon
-|_  a=ask
+|_  r=request
 ++  grow
   |%
-  ++  noun  a
+  ++  noun  r
   --
 ++  grab
   |%
-  ++  noun  ask
+  ++  noun  request
   --
 ++  grad  %noun
 --
