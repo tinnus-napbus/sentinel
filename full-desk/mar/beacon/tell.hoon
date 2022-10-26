@@ -1,12 +1,12 @@
 /-  *beacon
-|_  t=tell
+|_  r=result
 ++  grow
   |%
-  ++  noun  t
+  ++  noun  r
   --
 ++  grab
   |%
-  ++  noun  tell
+  ++  noun  result
   --
 ++  grad  %noun
 --
