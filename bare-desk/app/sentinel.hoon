@@ -106,6 +106,7 @@
   ++  handle-action
     |=  act=action
     ^-  (quip card _state)
+    ?>  =(our.bowl src.bowl)
     =/  =entry  (got:orm open time.act)
     ?>  ?=(%got result.entry)
     =/  =result  ?:(approve.act %yes %no)
