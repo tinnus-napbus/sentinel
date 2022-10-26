@@ -1,0 +1,10 @@
+:~
+  title+'Sentinel'
+  info+'Login with Urbit'
+  color+0x54.a992
+  version+[0 1 0]
+  website+'https://urbit.org/'
+  license+'MIT'
+  base+'sentinel'
+  glob-http+['https://m.tinnus-napbus.xyz/pub/globs/sentinel-v0.1.0.glob' 0v2nja.td8j1.nv99r.mhg3t.quubr]
+==
