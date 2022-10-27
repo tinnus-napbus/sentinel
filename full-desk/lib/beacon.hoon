@@ -13,23 +13,16 @@
     ==
     ::
     ++  request
+      %+  cu
+        (lead 0x0)
       %-  ot
-      :~  id+id
-          ship+(su fed:ag)
+      :~  ship+(su fed:ag)
           turf+turf
           user+(mu so)
           code+(mu ni)
           msg+(mu so)
           expire+di
       ==
-    ::
-    ++  id
-      |=  jon=json
-      ^-  @ux
-      ?~  jon
-        0x0
-      ?>  ?=([%s *] jon)
-      (rash p.jon hex)
     ::
     ++  turf
       |=  jon=json
@@ -79,7 +72,7 @@
       ==
     ::
         [%init-all *]
-      %+  frond  'init-all'
+      %+  frond  'initAll'
       %-  pairs
       :~  ['since' ?~(since.upd ~ (numb u.since.upd))]
           ['before' ?~(before.upd ~ (numb u.before.upd))]
@@ -87,7 +80,7 @@
       ==
     ::
         [%init-turf *]
-      %+  frond  'init-turf'
+      %+  frond  'initTurf'
       %-  pairs
       :~  ['turf' s+(en-turf:html turf.upd)]
           ['since' ?~(since.upd ~ (numb u.since.upd))]
@@ -96,7 +89,7 @@
       ==
     ::
         [%init-ship *]
-      %+  frond  'init-ship'
+      %+  frond  'initShip'
       %-  pairs
       :~  ['ship' (ship ship.upd)]
           ['since' ?~(since.upd ~ (numb u.since.upd))]
@@ -118,8 +111,7 @@
     |=  request=^request
     ^-  json
     %-  pairs
-    :~  ['id' s+(crip ((x-co:co 32) id.request))]
-        ['ship' (ship ship.request)]
+    :~  ['ship' (ship ship.request)]
         ['turf' s+(en-turf:html turf.request)]
         ['user' ?~(user.request ~ s+u.user.request)]
         ['code' ?~(code.request ~ (numb u.code.request))]
