@@ -64,8 +64,8 @@
           ['result' s+result.upd]
       ==
     ::
-        [%result *]
-      %+  frond  'result'
+        [%status *]
+      %+  frond  'status'
       %-  pairs
       :~  ['stamp' (numb stamp.upd)]
           ['result' s+result.upd]

@@ -21,7 +21,7 @@
   ==
 +$  update
   $%  [%entry =stamp =request =result]
-      [%result =stamp =result]
+      [%status =stamp =result]
       [%init-all since=(unit stamp) before=(unit stamp) =logs]
       [%init-turf =turf since=(unit stamp) before=(unit stamp) =logs]
       [%init-ship =ship since=(unit stamp) before=(unit stamp) =logs]
