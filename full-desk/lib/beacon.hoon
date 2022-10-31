@@ -8,7 +8,7 @@
     |^  ^-  ^action
     %.  jon
     %-  of
-    :~  request+(ot stamp+ni request+request ~)
+    :~  new+(ot stamp+ni request+request ~)
         cancel+(ot stamp+ni ~)
     ==
     ::
@@ -56,8 +56,8 @@
     |=  upd=^update
     ^-  json
     ?-    upd
-        [%request *]
-      %+  frond  'request'
+        [%entry *]
+      %+  frond  'entry'
       %-  pairs
       :~  ['stamp' (numb stamp.upd)]
           ['request' (request request.upd)]
