@@ -1,12 +1,12 @@
 /-  *beacon
-|_  r=request
+|_  dat=[=id =request]
 ++  grow
   |%
-  ++  noun  r
+  ++  noun  dat
   --
 ++  grab
   |%
-  ++  noun  request
+  ++  noun  ,[=id =request]
   --
 ++  grad  %noun
 --

@@ -2,18 +2,23 @@
 |%
 +$  status  ?(%ok %bad %old %old-bad %idk)
 +$  result  ?(%yes %no %expire %got %abort %error)
-+$  entry   [src=ship =status =request:beacon =result:beacon]
-+$  action  [=time approve=?]
++$  received  time
++$  entry   [=received =status =request:beacon =result]
++$  ref     [src=ship =id:beacon]
++$  item    [=ref entry]
++$  logs    (list item)
++$  action  [=ref approve=?]
 +$  update
-  $%  [%new =time =entry]
-      [%close =time =result:beacon]
-      [%open logs=(list [=time =entry])]
-      [%closed before=time logs=(list [=time =entry])]
+  $%  [%new item]
+      [%close =ref =result]
+      [%open =logs]
+      [%closed before=time =logs]
   ==
-+$  log      ((mop time entry) gth)
-++  orm      ((on time entry) gth)
-+$  by-id    (map @ux time)
-+$  pending  (map time [src=ship =request:beacon])
++$  log-val  (each ref (set ref))
++$  log      ((mop received log-val) gth)
+++  orm      ((on received log-val) gth)
++$  entries  (map ref entry)
++$  pending  (map ref [=received =request:beacon])
 +$  valid    (map [src=ship =turf] time)
 ::
 ++  old-0

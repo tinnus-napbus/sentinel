@@ -2,33 +2,36 @@
 +$  proof  [=turf =ship =life =sign]
 +$  sign  @uw
 +$  manifest  (list proof)
-+$  stamp  @udunixnano
++$  id  @ux
 +$  request
-  $:  id=@ux
-      =ship
+  $:  =ship
       =turf
       user=(unit @t)
       code=(unit @ud)
       msg=(unit @t)
-      expire=@da
+      exp=@da
+      =time
   ==
 +$  result  ?(%yes %no %expire %got %sent %abort %error)
-+$  entry   [=request =result]
-+$  logs    (list [=stamp =request =result])
++$  entry   [req=request res=result]
++$  item    [=id entry]
++$  logs    (list item)
 +$  action
-  $%  [%new =stamp =request]
-      [%cancel =stamp]
+  $%  [%new =id req=request]
+      [%cancel =id]
   ==
 +$  update
-  $%  [%entry =stamp =request =result]
-      [%status =stamp =result]
-      [%init-all since=(unit stamp) before=(unit stamp) =logs]
-      [%init-turf =turf since=(unit stamp) before=(unit stamp) =logs]
-      [%init-ship =ship since=(unit stamp) before=(unit stamp) =logs]
+  $%  [%entry =id entry]
+      [%status =id res=result]
+      [%init-all since=(unit @da) before=(unit @da) =logs]
+      [%init-turf =turf since=(unit @da) before=(unit @da) =logs]
+      [%init-ship =ship since=(unit @da) before=(unit @da) =logs]
   ==
-+$  log  ((mop stamp entry) lth)
-+$  by-ship  (jug ship stamp)
-++  orm  ((on stamp entry) lth)
++$  log-val  (each id (set id))
++$  log  ((mop @da log-val) lth)
+++  orm  ((on @da log-val) lth)
++$  by-ship  (jug ship id)
++$  entries  (map id entry)
 ::
 ++  old-0
   |%

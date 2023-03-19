@@ -1,4 +1,5 @@
 /-  *sentinel, beacon
+/+  blib=beacon
 |%
 ++  dejs
   |%
@@ -24,11 +25,26 @@
     --
   ::
   ++  action
-    =,  dejs:format
     |=  jon=json
     ^-  ^action
     %.  jon
-    (ot time+di approve+bo ~)
+    (ot:dejs:format ref+ref approve+bo:dejs:format ~)
+  ::
+  ++  ref
+    |=  jon=json
+    ^-  ^ref
+    %.  jon
+    %-  su:dejs:format
+    ;~  plug
+      fed:ag
+      ;~  pfix
+        fas
+        %+  cook
+          |=  =tape
+          (uuid-to-id:blib (crip tape))
+        (plus next)
+      ==
+    ==
   --
 ++  enjs
   =,  enjs:format
@@ -40,14 +56,14 @@
         [%new *]
       %+  frond  'new'
       %-  pairs
-      :~  ['time' (time time.upd)]
-          ['entry' (entry entry.upd)]
+      :~  ['ref' (ref ref.upd)]
+          ['entry' (entry +>.upd)]
       ==
     ::
         [%close *]
       %+  frond  'close'
       %-  pairs
-      :~  ['time' (time time.upd)]
+      :~  ['ref' (ref ref.upd)]
           ['result' s+result.upd]
       ==
     ::
@@ -62,35 +78,41 @@
       ==
     ==
   ::
+  ++  ref
+    |=  rf=^ref
+    ^-  json
+    :-  %s
+    (rap 3 (rsh 3 (scot %p src.rf)) '/' (id-to-uuid:blib id.rf) ~)
+  ::
   ++  logs
-    |=  ls=(list [@da ^entry])
+    |=  ls=^logs
     ^-  json
     :-  %a
     %+  turn  ls
-    |=  [d=@da ent=^entry]
-    a+[(time d) (entry ent) ~]
+    |=  [rf=^ref ent=^entry]
+    a+[(ref rf) (entry ent) ~]
   ::
   ++  entry
     |=  ent=^entry
     ^-  json
     %-  pairs
-    :~  ['src' (ship src.ent)]
+    :~  ['received' (time received.ent)]
         ['status' s+status.ent]
         ['request' (request request.ent)]
         ['result' s+result.ent]
     ==
   ::
   ++  request
-    |=  =request:beacon
+    |=  req=request:beacon
     ^-  json
     %-  pairs
-    :~  ['id' s+(crip ((x-co:co 32) id.request))]
-        ['ship' (ship ship.request)]
-        ['turf' s+(en-turf:html turf.request)]
-        ['user' ?~(user.request ~ s+u.user.request)]
-        ['code' ?~(code.request ~ (numb u.code.request))]
-        ['msg' ?~(msg.request ~ s+u.msg.request)]
-        ['expire' (time expire.request)]
+    :~  ['ship' (ship ship.req)]
+        ['turf' s+(en-turf:html turf.req)]
+        ['user' ?~(user.req ~ s+u.user.req)]
+        ['code' ?~(code.req ~ (numb u.code.req))]
+        ['msg' ?~(msg.req ~ s+u.msg.req)]
+        ['exp' (time exp.req)]
+        ['time' (time time.req)]
     ==
   --
 ::

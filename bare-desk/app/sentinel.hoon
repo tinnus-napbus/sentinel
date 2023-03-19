@@ -6,8 +6,67 @@
       state-0
   ==
 +$  state-0  [%zero *]
-+$  state-1  [%1 =log open=log =by-id =pending =valid]
++$  state-1  [%1 =log open=log =entries =pending =valid]
 +$  card  card:agent:gall
+++  make-ref-path
+  |=  =ref
+  ^-  path
+  /(scot %p src.ref)/(id-to-uuid:blib id.ref)
+++  has-log
+  |=  [=log =received =ref]
+  ^-  ?
+  ?.  (has:orm log received)  %.n
+  =/  val  (got:orm log received)
+  ?:  ?=(%.y -.val)
+    =(ref p.val)
+  (~(has in p.val) ref)
+++  put-log
+  |=  [=log =received =ref]
+  ^-  ^log
+  ?.  (has:orm log received)
+    (put:orm log received [%.y ref])
+  =/  val  (got:orm log received)
+  ?:  ?=(%.n -.val)
+    (put:orm log received val(p (~(put in p.val) ref)))
+  (put:orm log received [%.n (~(gas in *(set ^ref)) p.val ref ~)])
+++  del-log
+  |=  [=log =received =ref]
+  ^-  ^log
+  ?.  (has:orm log received)
+    log
+  =/  val  (got:orm log received)
+  ?:  ?=(%.y -.val)
+    ?.  =(p.val ref)
+      log
+    (tail (del:orm log received))
+  =.  p.val  (~(del in p.val) ref)
+  =/  members=@ud  ~(wyt in p.val)
+  ?~  p.val  (tail (del:orm log received))
+  ?:  =(1 members)
+    (put:orm log received [%.y n.p.val])
+  (put:orm log received val)
+++  flat-log
+  |=  [=log =entries part=(unit [before=time count=@ud])]
+  ^-  logs
+  %-  flop
+  %+  roll
+    ?~  part
+      (tap:orm log)
+    (tab:orm log `before.u.part count.u.part)
+  |=  [[key=received val=log-val] out=logs]
+  ?:  ?=(%.y -.val)
+    ?~  ent=(~(get by entries) p.val)
+      out
+    [[p.val u.ent] out]
+  %-  weld
+  :_  out
+  %+  murn
+    %+  sort  ~(tap in p.val)
+    |=  [a=ref b=ref]
+    ?:  =(src.a src.b)
+      (gte id.a id.b)
+    (gth src.a src.b)
+  |=(=ref `(unit item)`(both (some ref) (~(get by entries) ref)))
 --
 ::
 %-  agent:dbug
@@ -50,76 +109,63 @@
   |^  ^-  (quip card _this)
   =^  cards  state
     ?+  mark  (on-poke:def mark vase)
-      %beacon-ask   (handle-beacon !<(request:beacon vase))
+      %beacon-ask   (handle-beacon !<([id:beacon request:beacon] vase))
       %sentinel-do  (handle-action !<(action vase))
     ==
   [cards this]
   ::
   ++  handle-beacon
-    |=  =request:beacon
+    |=  [=id:beacon req=request:beacon]
     ^-  (quip card _state)
-    ?>  ?&  ?=(^ turf.request)
-            =(our.bowl ship.request)
-            !(~(has by by-id) id.request)
-        ==
-    =/  =time
-      =/  t=@da
-        (from-unix-ms:chrono:userlib (unm:chrono:userlib now.bowl))
-      |-
-      ?.  ?|  (has:orm log t)
-              (has:orm open t)
-              (~(has by pending) t)
-          ==
-        t
-      $(t (from-unix-ms:chrono:userlib +((unm:chrono:userlib t))))
-    =/  good=(unit ^time)  (~(get by valid) [src.bowl turf.request])
+    =/  =ref  [src.bowl id]
+    ?>  ?=(^ turf.req)
+    ?>  =(our.bowl ship.req)
+    ?>  (check-id:blib id)
+    ?<  (~(has by entries) ref)
+    ?<  (~(has by pending) ref)
+    =/  ref-path=path  (make-ref-path ref)
+    =/  good=(unit time)  (~(get by valid) [src.bowl turf.req])
     ?:  &(?=(^ good) (gte ~d30 (sub now.bowl u.good)))
-      =/  =path  /results/(scot %p src.bowl)/(scot %ux id.request)
-      =/  =result:beacon
-        ?:((lte expire.request now.bowl) %expire %got)
-      =/  local=(list ^path)
-        ?:  ?=(%expire result)
-          ~[/all]
-        ~[/all /open]
-      =/  =update  [%new time src.bowl %ok request result]
+      =/  =path    [%results ref-path]
+      =/  =result  ?:((lte exp.req now.bowl) %expire %got)
+      =/  =update  [%new ref now.bowl %ok req result]
+      =/  local=(list ^path)  [/all ?:(?=(%expire result) ~ [/open ~])]
       :_  %=  state
-            by-id    (~(put by by-id) id.request time)
-            open     ?:  ?=(%expire result)
-                       open
-                     (put:orm open time src.bowl %ok request result)
-            log      ?:  ?=(%got result)
-                       log
-                     (put:orm log time src.bowl %ok request result)
+            entries  (~(put by entries) ref [now.bowl %ok req result])
+            open     ?:(?=(%expire result) open (put-log open now.bowl ref))
+            log      ?:(?=(%got result) log (put-log log now.bowl ref))
           ==
       :*  [%give %fact local %sentinel-did !>(update)]
           [%give %fact ~[path] %beacon-tell !>(result)]
           ?:  ?=(%expire result)
             ~
-          =/  =wire  /timer/(scot %da time)
-          [%pass wire %arvo %b %wait expire.request]~
+          =/  =wire  [%timer ref-path]
+          [%pass wire %arvo %b %wait exp.req]~
       ==
-    =/  =wire  /check/(scot %da time)
-    =/  =cage  [%noun !>([~ src.bowl turf.request])]
-    :_  state(pending (~(put by pending) time src.bowl request))
+    =/  =wire  [%check ref-path]
+    =/  =cage  [%noun !>([~ src.bowl turf.req])]
+    :_  state(pending (~(put by pending) ref [now.bowl req]))
     [%pass wire %arvo %k %fard %sentinel %validate-url cage]~
   ::
   ++  handle-action
-    |=  act=action
+    |=  [=ref approve=?]
     ^-  (quip card _state)
     ?>  =(our.bowl src.bowl)
-    =/  =entry  (got:orm open time.act)
+    =/  =entry  (~(got by entries) ref)
     ?>  ?=(%got result.entry)
-    =/  =result  ?:(approve.act %yes %no)
-    =/  =path    /results/(scot %p src.entry)/(scot %ux id.request.entry)
-    =/  =wire    /timer/(scot %da time.act)
-    =/  =update  [%close time.act result]
+    =/  ref-path=path  (make-ref-path ref)
+    =/  =result  ?:(approve %yes %no)
+    =/  =path    [%results ref-path]
+    =/  =wire    [%timer ref-path]
+    =/  =update  [%close ref result]
     :_  %=  state
-          log   (put:orm log time.act entry(result result))
-          open  (tail (del:orm open time.act))
+          entries  (~(put by entries) ref entry(result result))
+          log      (put-log log received.entry ref)
+          open     (del-log open received.entry ref)
         ==
     :~  [%give %fact ~[/open /all] %sentinel-did !>(update)]
         [%give %fact ~[path] %beacon-tell !>(result)]
-        [%pass wire %arvo %b %rest expire.request.entry]
+        [%pass wire %arvo %b %rest exp.request.entry]
     ==
   --
 ::
@@ -133,20 +179,14 @@
   ::
       [%open ~]
     ?>  =(our.bowl src.bowl)
-    =/  =update  [%open (tap:orm open)]
+    =/  =update  [%open (flat-log open entries ~)]
     :_  this
     [%give %fact ~ %sentinel-did !>(update)]~
   ::
       [%results @ @ ~]
-    =/  src=ship    (slav %p i.t.path)
-    =/  id=@ux  (slav %ux i.t.t.path)
-    ?>  =(src src.bowl)
-    =/  tyme=(unit time)  (~(get by by-id) id)
-    ?~  tyme  `this
-    =/  ent=(unit entry)
-      (hunt |=(* &) (get:orm log u.tyme) (get:orm open u.tyme))
-    ?~  ent  `this
-    ?>  =(src.u.ent src.bowl)
+    =/  =ref  [(slav %p i.t.path) (uuid-to-id:blib i.t.t.path)]
+    ?>  =(src.ref src.bowl)
+    ?~  ent=(~(get by entries) ref)  `this
     :_  this
     [%give %fact ~ %beacon-tell !>(result.u.ent)]~
   ==
@@ -155,104 +195,71 @@
   |=  [=wire sign=sign-arvo]
   ^-  (quip card _this)
   ?+    wire  (on-arvo:def wire sign)
-      [%timer @ ~]
+      [%timer @ @ ~]
     ?.  ?=([%behn %wake *] sign)  (on-arvo:def wire sign)
-    =/  =time  (slav %da i.t.wire)
-    =/  ent=(unit entry)  (get:orm open time)
-    ?~  ent  `this
+    =/  =ref  [(slav %p i.t.wire) (uuid-to-id:blib i.t.t.wire)]
+    ?~  ent=(~(get by entries) ref)  `this
+    ?.  (has-log open received.u.ent ref)  `this
     ?:  ?&  ?=(^ error.sign)
-            (gth expire.request.u.ent now.bowl)
+            (gth exp.request.u.ent now.bowl)
         ==
       :_  this
-      [%pass wire %arvo %b %wait expire.request.u.ent]~
-    =/  =path  /results/(scot %p src.u.ent)/(scot %ux id.request.u.ent)
-    =/  =update  [%close time %expire]
+      [%pass wire %arvo %b %wait exp.request.u.ent]~
+    =/  =path    [%results t.wire]
+    =/  =update  [%close ref %expire]
     :_  %=  this
-          log   (put:orm log time u.ent(result %expire))
-          open  (tail (del:orm open time))
+          entries  (~(put by entries) ref u.ent(result %expire))
+          log      (put-log log received.u.ent ref)
+          open     (del-log open received.u.ent ref)
         ==
     :~  [%give %fact ~[/open /all] %sentinel-did !>(update)]
         [%give %fact ~[path] %beacon-tell !>(%expire)]
     ==
   ::
-      [%check @ ~]
+      [%check @ @ ~]
     ?.  ?=([%khan %arow *] sign)  (on-arvo:def wire sign)
-    =/  =time  (slav %da i.t.wire)
+    =/  =ref  [(slav %p i.t.wire) (uuid-to-id:blib i.t.t.wire)]
+    ?~  dat=(~(get by pending) ref)  `this
+    =/  =result  ?:((lte exp.request.u.dat now.bowl) %expire %got)
+    =/  =entry   [received.u.dat %idk request.u.dat result]
+    =/  =path    [%results t.wire]
+    =/  local=(list ^path)  [/all ?:(?=(%expire result) ~ [/open ~])]
     ?:  ?=(%| -.p.sign)
-      =/  res=(unit [src=ship =request:beacon])
-        (~(get by pending) time)
-      ?~  res  `this
       ?:  ?=(%cancelled mote.p.p.sign)
-        =/  =cage  [%noun !>([~ src.u.res turf.request.u.res])]
+        =/  =cage  [%noun !>([~ src.ref turf.request.u.dat])]
         :_  this
         [%pass wire %arvo %k %fard %sentinel %validate-url cage]~
-      =/  =result:beacon
-        ?:((lte expire.request.u.res now.bowl) %expire %got)
-      =/  =update  [%new time src.u.res %idk request.u.res result]
-      =/  =path  /results/(scot %p src.u.res)/(scot %ux id.request.u.res)
-      =/  local=(list ^path)
-        ?:  ?=(%expire result)
-          ~[/all]
-        ~[/open /all]
       :_  %=  this
-            pending  (~(del by pending) time)
-            by-id    (~(put by by-id) id.request.u.res time)
+            pending  (~(del by pending) ref)
+            entries  (~(put by entries) ref entry)
             log      ?:  ?=(%got result)
                        log
-                     %^  put:orm  log  time
-                     [src.u.res %idk request.u.res result]
+                     (put-log log received.u.dat ref)
             open     ?:  ?=(%expire result)
                        open
-                     %^  put:orm  open  time
-                     [src.u.res %idk request.u.res result]
+                     (put-log open received.u.dat ref)
           ==
-      :*  [%give %fact local %sentinel-did !>(update)]
+      :*  [%give %fact local %sentinel-did !>(`update`[%new ref entry])]
           [%give %fact ~[path] %beacon-tell !>(result)]
           ?:  ?=(%expire result)
             ~
-          [%pass /timer/(scot %da time) %arvo %b %wait expire.request.u.res]~
+          [%pass [%timer t.wire] %arvo %b %wait exp.request.u.dat]~
       ==
-    =+  !<(=status q.p.p.sign)
-    =/  res=(unit [src=ship =request:beacon])
-      (~(get by pending) time)
-    ?~  res  `this
-    =/  =result:beacon
-      ?:((lte expire.request.u.res now.bowl) %expire %got)
-    =/  =update  [%new time src.u.res status request.u.res result]
-    =/  =path  /results/(scot %p src.u.res)/(scot %ux id.request.u.res)
-    =/  local=(list ^path)
-      ?:  ?=(%expire result)
-        ~[/all]
-      ~[/open /all]
-    :_  %=    this
-            pending
-          (~(del by pending) time)
-        ::
-            by-id
-          (~(put by by-id) id.request.u.res time)
-        ::
-            valid
-          ?.  ?=(%ok status)
-            valid
-          (~(put by valid) [src.u.res turf.request.u.res] now.bowl)
-        ::
-            log
-          ?:  ?=(%got result)
-            log
-          %^  put:orm  log  time
-          [src.u.res status request.u.res result]
-        ::
-            open
-          ?:  ?=(%expire result)
-            open
-          %^  put:orm  open  time
-          [src.u.res status request.u.res result]
+    =.  entry   entry(status !<(status q.p.p.sign))
+    :_  %=  this
+          pending  (~(del by pending) ref)
+          entries  (~(put by entries) ref entry)
+          log      ?:(?=(%got result) log (put-log log received.u.dat ref))
+          open     ?:(?=(%expire result) open (put-log open received.u.dat ref))
+          valid    ?.  ?=(%ok status.entry)
+                     valid
+                   (~(put by valid) [src.ref turf.request.u.dat] now.bowl)
         ==
-    :*  [%give %fact local %sentinel-did !>(update)]
+    :*  [%give %fact local %sentinel-did !>(`update`[%new ref entry])]
         [%give %fact ~[path] %beacon-tell !>(result)]
         ?:  ?=(%expire result)
           ~
-        [%pass /timer/(scot %da time) %arvo %b %wait expire.request.u.res]~
+        [%pass [%timer t.wire] %arvo %b %wait exp.request.u.dat]~
     ==
   ==
 ::
@@ -260,21 +267,17 @@
   |=  =path
   ^-  (unit (unit cage))
   ?+    path  (on-peek:def path)
-      [%x %check ~]
-    ``json+!>(~)
+      [%x %check ~]  ``json+!>(~)
   ::
       [%x %open ~]
     :^  ~  ~  %sentinel-did
-    !>  ^-  update
-    [%open (tap:orm open)]
+    !>(`update`[%open (flat-log open entries ~)])
   ::
       [%x %closed @ @ ~]
-    =/  =time
-      (from-unix-ms:chrono:userlib (rash i.t.t.path dem))
-    =/  count=@ud  (rash i.t.t.t.path dem)
+    =/  before=@da  (from-unix-ms:chrono:userlib (rash i.t.t.path dem))
+    =/  count=@ud    (rash i.t.t.t.path dem)
     :^  ~  ~  %sentinel-did
-    !>  ^-  update
-    [%closed time (tab:orm log `time count)]
+    !>(`update`[%closed before (flat-log log entries ~ before count)])
   ==
 ::
 ++  on-agent  on-agent:def

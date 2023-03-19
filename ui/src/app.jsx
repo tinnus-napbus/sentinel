@@ -46,10 +46,10 @@ class App extends Component {
     const open = this.state.open;
     if ("new" in u) {
       if (u.new.entry.result === "got") {
-        this.setState({open: open.set(u.new.time, u.new.entry)})
+        this.setState({open: open.set(u.new.ref, u.new.entry)})
       }
     } else if ("close" in u) {
-      open.delete(u.close.time);
+      open.delete(u.close.ref);
       this.setState({open: open});
     } else if ("open" in u) {
       this.setState({open: new Map(u.open.reverse())})
@@ -74,18 +74,18 @@ class App extends Component {
     )
   };
 
-  choose = (time, ent, choice) => {
+  choose = (ref, ent, choice) => {
     const open = this.state.open;
     ent.result = (choice) ? "yes" : "no";
     window.urbit.poke({
       app: "sentinel",
       mark: "sentinel-do",
       json: {
-        time: time,
+        ref: ref,
         approve: choice
       }
     });
-    this.setState({open: open.set(time, ent)});
+    this.setState({open: open.set(ref, ent)});
   }
 
   entries = () => {
@@ -104,7 +104,7 @@ class App extends Component {
     )
   };
 
-  entry = ([time, ent]) => {
+  entry = ([ref, ent]) => {
     const cl = classNames(
       "first:mt-auto",
       "bg-wall-100",
@@ -117,7 +117,7 @@ class App extends Component {
       {"opacity-50": (ent.result !== "got")}
     );
     return (
-      <div key={time} className={cl}>
+      <div key={ref} className={cl}>
         {this.domain(ent.request.turf)}
         {this.icon(ent.status)}
         {this.username(ent.request.user)}
@@ -129,7 +129,7 @@ class App extends Component {
             (ent.request.code !== null)
           )
         }
-        {this.buttons(time, ent)}
+        {this.buttons(ref, ent)}
         {this.info(ent.status)}
       </div>
     )
@@ -223,7 +223,7 @@ class App extends Component {
     )
   };
 
-  buttons = (time, ent) => {
+  buttons = (ref, ent) => {
     const yesCl = classNames(
       "button-lg",
       "bg-green-400",
@@ -240,14 +240,14 @@ class App extends Component {
     return (
       <div className="col-start-1 col-span-full flex justify-evenly my-2">
         <button
-          onClick={() => this.choose(time, ent, true)}
+          onClick={() => this.choose(ref, ent, true)}
           className={yesCl}
           disabled={(ent.result !== "got")}
         >
           Approve
         </button>
         <button
-          onClick={() => this.choose(time, ent, false)}
+          onClick={() => this.choose(ref, ent, false)}
           className={noCl}
           disabled={(ent.result !== "got")}
         >
