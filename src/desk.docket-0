@@ -1,9 +1,0 @@
-:~
-  title+'Sentinel'
-  info+'User authentication tool to login to a site.  Quis custodiet ipsos custodes?'
-  color+0x54.a992
-  version+[0 0 1]
-  website+'https://urbit.org/'
-  license+'MIT'
-  site+/sentinel
-==
